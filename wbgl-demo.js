@@ -1,4 +1,5 @@
 
+
 var vsSource = `
   attribute vec2 a_position;
   attribute vec2 a_texCoord;
@@ -151,17 +152,13 @@ var textBufferInfo = {
 
   const modelMatrix = mat4.create();
 
-  mat4.scale(modelMatrix, modelMatrix, [3.0, 3.0, 0.0]);
+  // mat4.scale(modelMatrix, modelMatrix, [1.0, 1.0, 0.0]);
 
-  mat4.translate(
-    modelMatrix,
-    modelMatrix,
-    [0.85, 1, 0.0],
-  ); 
-
-  
-
-  
+  // mat4.translate(
+  //   modelMatrix,
+  //   modelMatrix,
+  //   [0.0, 0.0, 0.0],
+  // ); 
 
   gl.uniformMatrix4fv(scaleMatrixLocation, false, modelMatrix);
  
