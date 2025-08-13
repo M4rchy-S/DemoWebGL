@@ -45,9 +45,9 @@ var frTextShader = `
     
     vec4 texColor = texture2D(u_image, v_texCoord) ;
     float sigDist = median(texColor.r, texColor.g, texColor.b) - 0.5;
-    float alpha = step(0.005, sigDist);
+    float alpha = step(0.001, sigDist);
     gl_FragColor = vec4(color, alpha);
-    if (gl_FragColor.a < 0.0001) discard;
+    // if (gl_FragColor.a < 0.0001) discard;
 
 
   }
@@ -161,7 +161,7 @@ var textBufferInfo = {
 
   const modelMatrix = mat4.create();
 
-  // mat4.scale(modelMatrix, modelMatrix, [1.0, 1.0, 0.0]);
+  mat4.scale(modelMatrix, modelMatrix, [1.0, 1.0, 0.0]);
 
   // mat4.translate(
   //   modelMatrix,
