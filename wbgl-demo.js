@@ -1,5 +1,5 @@
 
-var vsSource = `
+var vTextShader = `
   attribute vec2 a_position;
   attribute vec2 a_texCoord;
 
@@ -28,17 +28,28 @@ var vsSource = `
 
   }
 `
-var frSource = `
+var frTextShader = `
   precision mediump float;
 
-  uniform vec4 u_color;
-  
+  uniform vec3 color;
   varying vec2 v_texCoord;
   uniform sampler2D u_image;
 
+  float median(float r, float g, float b) {
+    return max(min(r, g), min(max(r, g), b));
+  }
+
   void main() {
     // gl_FragColor = u_color;
-    gl_FragColor = texture2D(u_image, v_texCoord) ;
+    // gl_FragColor = texture2D(u_image, v_texCoord) ;
+    
+    vec4 texColor = texture2D(u_image, v_texCoord) ;
+    float sigDist = median(texColor.r, texColor.g, texColor.b) - 0.5;
+    float alpha = step(0.005, sigDist);
+    gl_FragColor = vec4(color, alpha);
+    if (gl_FragColor.a < 0.0001) discard;
+
+
   }
 
 `
@@ -80,8 +91,8 @@ function render(image) {
 
   // Get the strings for our GLSL shaders
 
-  var vertexShader = createShader(gl, gl.VERTEX_SHADER, vsSource);
-  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, frSource);
+  var vertexShader = createShader(gl, gl.VERTEX_SHADER, vTextShader);
+  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, frTextShader);
 
   var program = createProgram(gl, vertexShader, fragmentShader);
 
@@ -122,8 +133,8 @@ var textBufferInfo = {
   //   positionAttributeLocation, size, type, normalize, stride, offset);
 
 
-  // var colorUniformLocation = gl.getUniformLocation(program, "u_color");
-  // gl.uniform4f(colorUniformLocation, 0.0, 1.0, 0.0, 1.0);
+  var colorUniformLocation = gl.getUniformLocation(program, "color");
+  gl.uniform3f(colorUniformLocation, 0.0, 0.0, 0.0);
 
   // var texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
 
@@ -144,8 +155,7 @@ var textBufferInfo = {
   var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
   gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
-  var texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+
 
   const scaleMatrixLocation = gl.getUniformLocation(program, "u_matrix");
 
@@ -160,19 +170,26 @@ var textBufferInfo = {
   // ); 
 
   gl.uniformMatrix4fv(scaleMatrixLocation, false, modelMatrix);
- 
-  // Set the parameters so we can render any size image.
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
- 
+
+  var texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
   // Upload the image into the texture.
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 
+  // Set the parameters so we can render any size image.
+  // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
   var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
   var texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
-  const test_str = "AAaaBBbb";
+  const test_str = "Hello world!";
   var vertices = makeVerticesForString(fontInfo, test_str);
 
   textBufferInfo.attribs.a_position.numComponents = 2;
@@ -334,7 +351,8 @@ function makeVerticesForString(fontInfo, s) {
       texcoords[offset + 10] = u2;
       texcoords[offset + 11] = v2;
  
-      x += glyphInfo.width + fontInfo.spacing;
+      // x += glyphInfo.width + glyphInfo.xadvance;
+      x += glyphInfo.xadvance;
       offset += 12;
     } else {
       // we don't have this character so just advance
