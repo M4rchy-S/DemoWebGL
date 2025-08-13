@@ -4,11 +4,12 @@ var vsSource = `
   attribute vec2 a_texCoord;
 
   uniform vec2 u_resolution;
+  uniform mat4 u_matrix;
 
   varying vec2 v_texCoord;
-  
 
   void main() {
+
     // convert the position from pixels to 0.0 to 1.0
     vec2 zeroToOne = a_position / u_resolution;
  
@@ -17,9 +18,14 @@ var vsSource = `
  
     // convert from 0->2 to -1->+1 (clip space)
     vec2 clipSpace = zeroToTwo - 1.0;
+
+    gl_Position = u_matrix * vec4(clipSpace, 0.0, 1.0);
  
-    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+    // gl_Position = vec4(clipSpace , 0, 1);
+    // gl_Position = vec4(clipSpace , 0, 1);
     v_texCoord = a_texCoord;
+
+
   }
 `
 var frSource = `
@@ -32,7 +38,7 @@ var frSource = `
 
   void main() {
     // gl_FragColor = u_color;
-    gl_FragColor = texture2D(u_image, v_texCoord);
+    gl_FragColor = texture2D(u_image, v_texCoord) ;
   }
 
 `
@@ -79,7 +85,7 @@ function render(image) {
 
   var program = createProgram(gl, vertexShader, fragmentShader);
 
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearColor(0.4, 0.4, 0.4, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   // gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -115,8 +121,6 @@ var textBufferInfo = {
   // gl.vertexAttribPointer(
   //   positionAttributeLocation, size, type, normalize, stride, offset);
 
-  var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
-  gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
   // var colorUniformLocation = gl.getUniformLocation(program, "u_color");
   // gl.uniform4f(colorUniformLocation, 0.0, 1.0, 0.0, 1.0);
@@ -137,8 +141,29 @@ var textBufferInfo = {
   // gl.enableVertexAttribArray(texCoordLocation);
   // gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
 
+  var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
+  gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+
   var texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  const scaleMatrixLocation = gl.getUniformLocation(program, "u_matrix");
+
+  const modelMatrix = mat4.create();
+
+  mat4.scale(modelMatrix, modelMatrix, [3.0, 3.0, 0.0]);
+
+  mat4.translate(
+    modelMatrix,
+    modelMatrix,
+    [0.85, 1, 0.0],
+  ); 
+
+  
+
+  
+
+  gl.uniformMatrix4fv(scaleMatrixLocation, false, modelMatrix);
  
   // Set the parameters so we can render any size image.
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -151,7 +176,7 @@ var textBufferInfo = {
 
   var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
   var texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
-  const test_str = "Hello world!";
+  const test_str = "234123,fe.";
   var vertices = makeVerticesForString(fontInfo, test_str);
 
   textBufferInfo.attribs.a_position.numComponents = 2;
@@ -214,6 +239,7 @@ var fontInfo = {
   spacing: -1,
   textureWidth: 64,
   textureHeight: 40,
+  
   glyphInfos: {
     'a': { x: 0, y: 0, width: 8, },
     'b': { x: 8, y: 0, width: 8, },
