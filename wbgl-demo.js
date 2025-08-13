@@ -1,5 +1,4 @@
 
-
 var vsSource = `
   attribute vec2 a_position;
   attribute vec2 a_texCoord;
@@ -86,7 +85,7 @@ function render(image) {
 
   var program = createProgram(gl, vertexShader, fragmentShader);
 
-  gl.clearColor(0.4, 0.4, 0.4, 1.0);
+  gl.clearColor(1.0, 1.0, 1.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   // gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -157,7 +156,7 @@ var textBufferInfo = {
   // mat4.translate(
   //   modelMatrix,
   //   modelMatrix,
-  //   [0.0, 0.0, 0.0],
+  //   [0.5, 0.5, 0.0],
   // ); 
 
   gl.uniformMatrix4fv(scaleMatrixLocation, false, modelMatrix);
@@ -173,7 +172,7 @@ var textBufferInfo = {
 
   var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
   var texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
-  const test_str = "234123,fe.";
+  const test_str = "AAaaBBbb";
   var vertices = makeVerticesForString(fontInfo, test_str);
 
   textBufferInfo.attribs.a_position.numComponents = 2;
@@ -205,7 +204,7 @@ var textBufferInfo = {
 
 function main() {
   var image = new Image();
-  image.src = "font.png";
+  image.src = "Mozilla.png";
   image.onload = function() {
     render(image);
   }
@@ -234,51 +233,53 @@ var fontInfo = {
   letterHeight: 8,
   spaceWidth: 8,
   spacing: -1,
-  textureWidth: 64,
-  textureHeight: 40,
-  
-  glyphInfos: {
-    'a': { x: 0, y: 0, width: 8, },
-    'b': { x: 8, y: 0, width: 8, },
-    'c': { x: 16, y: 0, width: 8, },
-    'd': { x: 24, y: 0, width: 8, },
-    'e': { x: 32, y: 0, width: 8, },
-    'f': { x: 40, y: 0, width: 8, },
-    'g': { x: 48, y: 0, width: 8, },
-    'h': { x: 56, y: 0, width: 8, },
-    'i': { x: 0, y: 8, width: 8, },
-    'j': { x: 8, y: 8, width: 8, },
-    'k': { x: 16, y: 8, width: 8, },
-    'l': { x: 24, y: 8, width: 8, },
-    'm': { x: 32, y: 8, width: 8, },
-    'n': { x: 40, y: 8, width: 8, },
-    'o': { x: 48, y: 8, width: 8, },
-    'p': { x: 56, y: 8, width: 8, },
-    'q': { x: 0, y: 16, width: 8, },
-    'r': { x: 8, y: 16, width: 8, },
-    's': { x: 16, y: 16, width: 8, },
-    't': { x: 24, y: 16, width: 8, },
-    'u': { x: 32, y: 16, width: 8, },
-    'v': { x: 40, y: 16, width: 8, },
-    'w': { x: 48, y: 16, width: 8, },
-    'x': { x: 56, y: 16, width: 8, },
-    'y': { x: 0, y: 24, width: 8, },
-    'z': { x: 8, y: 24, width: 8, },
-    '0': { x: 16, y: 24, width: 8, },
-    '1': { x: 24, y: 24, width: 8, },
-    '2': { x: 32, y: 24, width: 8, },
-    '3': { x: 40, y: 24, width: 8, },
-    '4': { x: 48, y: 24, width: 8, },
-    '5': { x: 56, y: 24, width: 8, },
-    '6': { x: 0, y: 32, width: 8, },
-    '7': { x: 8, y: 32, width: 8, },
-    '8': { x: 16, y: 32, width: 8, },
-    '9': { x: 24, y: 32, width: 8, },
-    '-': { x: 32, y: 32, width: 8, },
-    '*': { x: 40, y: 32, width: 8, },
-    '!': { x: 48, y: 32, width: 8, },
-    '?': { x: 56, y: 32, width: 8, },
-  },
+  textureWidth: 512,
+  textureHeight: 512,
+
+  glyphInfos: MainFontData
+
+  // glyphInfos: {
+  //   'a': { x: 0, y: 0, width: 8, },
+  //   'b': { x: 8, y: 0, width: 8, },
+  //   'c': { x: 16, y: 0, width: 8, },
+  //   'd': { x: 24, y: 0, width: 8, },
+  //   'e': { x: 32, y: 0, width: 8, },
+  //   'f': { x: 40, y: 0, width: 8, },
+  //   'g': { x: 48, y: 0, width: 8, },
+  //   'h': { x: 56, y: 0, width: 8, },
+  //   'i': { x: 0, y: 8, width: 8, },
+  //   'j': { x: 8, y: 8, width: 8, },
+  //   'k': { x: 16, y: 8, width: 8, },
+  //   'l': { x: 24, y: 8, width: 8, },
+  //   'm': { x: 32, y: 8, width: 8, },
+  //   'n': { x: 40, y: 8, width: 8, },
+  //   'o': { x: 48, y: 8, width: 8, },
+  //   'p': { x: 56, y: 8, width: 8, },
+  //   'q': { x: 0, y: 16, width: 8, },
+  //   'r': { x: 8, y: 16, width: 8, },
+  //   's': { x: 16, y: 16, width: 8, },
+  //   't': { x: 24, y: 16, width: 8, },
+  //   'u': { x: 32, y: 16, width: 8, },
+  //   'v': { x: 40, y: 16, width: 8, },
+  //   'w': { x: 48, y: 16, width: 8, },
+  //   'x': { x: 56, y: 16, width: 8, },
+  //   'y': { x: 0, y: 24, width: 8, },
+  //   'z': { x: 8, y: 24, width: 8, },
+  //   '0': { x: 16, y: 24, width: 8, },
+  //   '1': { x: 24, y: 24, width: 8, },
+  //   '2': { x: 32, y: 24, width: 8, },
+  //   '3': { x: 40, y: 24, width: 8, },
+  //   '4': { x: 48, y: 24, width: 8, },
+  //   '5': { x: 56, y: 24, width: 8, },
+  //   '6': { x: 0, y: 32, width: 8, },
+  //   '7': { x: 8, y: 32, width: 8, },
+  //   '8': { x: 16, y: 32, width: 8, },
+  //   '9': { x: 24, y: 32, width: 8, },
+  //   '-': { x: 32, y: 32, width: 8, },
+  //   '*': { x: 40, y: 32, width: 8, },
+  //   '!': { x: 48, y: 32, width: 8, },
+  //   '?': { x: 56, y: 32, width: 8, },
+  // },
 };
 
 
@@ -298,7 +299,7 @@ function makeVerticesForString(fontInfo, s) {
     if (glyphInfo) {
       var x2 = x + glyphInfo.width;
       var u1 = glyphInfo.x / maxX;
-      var v1 = (glyphInfo.y + fontInfo.letterHeight - 1) / maxY;
+      var v1 = (glyphInfo.y + glyphInfo.height - 1) / maxY;
       var u2 = (glyphInfo.x + glyphInfo.width - 1) / maxX;
       var v2 = glyphInfo.y / maxY;
  
@@ -314,12 +315,12 @@ function makeVerticesForString(fontInfo, s) {
       texcoords[offset + 3] = v1;
  
       positions[offset + 4] = x;
-      positions[offset + 5] = fontInfo.letterHeight;
+      positions[offset + 5] = glyphInfo.height;
       texcoords[offset + 4] = u1;
       texcoords[offset + 5] = v2;
  
       positions[offset + 6] = x;
-      positions[offset + 7] = fontInfo.letterHeight;
+      positions[offset + 7] = glyphInfo.height;
       texcoords[offset + 6] = u1;
       texcoords[offset + 7] = v2;
  
@@ -329,7 +330,7 @@ function makeVerticesForString(fontInfo, s) {
       texcoords[offset + 9] = v1;
  
       positions[offset + 10] = x2;
-      positions[offset + 11] = fontInfo.letterHeight;
+      positions[offset + 11] = glyphInfo.height;
       texcoords[offset + 10] = u2;
       texcoords[offset + 11] = v2;
  
