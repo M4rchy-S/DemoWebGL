@@ -1330,3 +1330,5 @@ const MainFontData = {
         "page": 0
     }
 }
+
+export { MainFontData }

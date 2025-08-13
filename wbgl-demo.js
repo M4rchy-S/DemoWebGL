@@ -1,3 +1,4 @@
+import { MainFontData } from "./font_data.js";
 
 var vTextShader = `
   attribute vec2 a_position;
