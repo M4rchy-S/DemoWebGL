@@ -127,18 +127,16 @@ function render(gl, program, text_buffers) {
 
   const modelMatrix = mat4.create();
 
-  mat4.scale(modelMatrix, modelMatrix, [1.0, 1.0, 0.0]);
+  mat4.scale(modelMatrix, modelMatrix, [text_buffers.scale.x, text_buffers.scale.y, 0.0]);
 
-  // mat4.translate(
-  //   modelMatrix,
-  //   modelMatrix,
-  //   [0.5, 0.5, 0.0],
-  // ); 
+  mat4.translate(
+    modelMatrix,
+    modelMatrix,
+    [text_buffers.position.x, text_buffers.position.y, 0.0],
+  ); 
 
-  // mat4.rotate(modelMatrix, modelMatrix, 59, [0.2, 0.2, 0.0]);
+  mat4.rotate(modelMatrix, modelMatrix, text_buffers.rotation, [0.1, 0.0, 0.0]);
 
-  // mat4.translate(modelMatrix, modelMatrix, [0.0, 0.0, 0.0]);
-  
   // mat4.scale(modelMatrix, modelMatrix, [0.2, 0.2, 0.0]);
 
   gl.uniformMatrix4fv(scaleMatrixLocation, false, modelMatrix);
@@ -157,27 +155,6 @@ function render(gl, program, text_buffers) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
- 
-  // const test_str = "Hello world!";
-  // var vertices = makeVerticesForString(fontInfo, test_str);
-
-  // textBufferInfo.attribs.a_position.numComponents = 2;
-
-  // gl.bindBuffer(gl.ARRAY_BUFFER, textBufferInfo.attribs.a_position.buffer);
-  // gl.bufferData(gl.ARRAY_BUFFER, vertices.arrays.position, gl.DYNAMIC_DRAW);
-  // var size = 2;          
-  // var type = gl.FLOAT;   
-  // var normalize = false; 
-  // var stride = 0;        
-  // var offset = 0;        
-  // gl.enableVertexAttribArray(positionAttributeLocation);
-  // gl.vertexAttribPointer(
-  //   positionAttributeLocation, size, type, normalize, stride, offset);
-
-  // gl.bindBuffer(gl.ARRAY_BUFFER, textBufferInfo.attribs.a_texcoord.buffer);
-  // gl.bufferData(gl.ARRAY_BUFFER, vertices.arrays.texcoord, gl.DYNAMIC_DRAW);
-  // gl.enableVertexAttribArray(texCoordLocation);
-  // gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
 
   // draw
   var primitiveType = gl.TRIANGLES;
@@ -220,7 +197,17 @@ function main() {
     numElements: 0,
     numVertices: 0,
     fontInfo,
-    Text: "Hello world!"
+    Text: "Hello world",
+    rotation: 0.0,
+    position: {
+      x: 0.0,
+      y: 0.0
+    },
+    scale: {
+      x: 1.0,
+      y: 1.0
+    },
+    ShaderProgram: program
   };
 
   // const test_str = "Hello world!";
@@ -260,10 +247,14 @@ function main() {
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
   
-  
-    render(gl, program, textBufferInfo);
+    requestAnimationFrame(rendering_start);
   });
 
+  function rendering_start(){
+    // textBufferInfo.rotation += 0.01;
+    render(gl, textBufferInfo.ShaderProgram, textBufferInfo);
+    requestAnimationFrame(rendering_start);
+  }
   
 }
  
