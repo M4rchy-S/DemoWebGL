@@ -1,6 +1,7 @@
 import { MainFontData } from "./font_data.js";
 import { makeVerticesForString } from "./Text.js";
 import {createShader, createProgram} from "./shader.js"
+import { points_to_vertices } from "./line_math.js";
 
 var vTextShader = `
   attribute vec2 a_position;
@@ -73,7 +74,7 @@ var vrChartShader = `
 
     gl_Position = vec4(clipSpace, 0.0, 1.0);
 
-    gl_PointSize = 10.0;
+    // gl_PointSize = 10.0;
 
   }
 `
@@ -81,7 +82,7 @@ var vrChartShader = `
 var frChartShader = `
 
   void main() {
-    gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 
   }
 `
@@ -190,7 +191,7 @@ function renderChart(gl, program, ChartPoints) {
   //  gl.enable(gl.DEPTH_TEST);
 
   // draw
-  gl.drawArrays(gl.POINTS, 0, 4);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
 
 }
 
@@ -293,12 +294,7 @@ function main() {
   //  CHART BUFFER POINTS
   const ChartPointsBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, ChartPointsBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-    0.0, 0.0,
-    125, 125,
-    150, 150,
-    250, 250
-  ]) , gl.DYNAMIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, points_to_vertices([20, 20, 100, 100, 150, 150]) , gl.DYNAMIC_DRAW);
 
   function rendering_start() {
 
