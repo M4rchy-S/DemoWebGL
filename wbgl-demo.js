@@ -46,7 +46,7 @@ var frTextShader = `
     
     vec4 texColor = texture2D(u_image, v_texCoord) ;
     float sigDist = median(texColor.r, texColor.g, texColor.b) - 0.5;
-    float alpha = step(0.001, sigDist);
+    float alpha = step(0.0001, sigDist);
     gl_FragColor = vec4(color, alpha);
     // if (gl_FragColor.a < 0.0001) discard;
 
@@ -83,81 +83,46 @@ function createProgram(gl, vertexShader, fragmentShader) {
 }
 
 
-function render(image) {
-  var canvas = document.querySelector('#c');
-  var gl = canvas.getContext('webgl');
-  if (!gl) {
-    return;
-  }
-
-  // Get the strings for our GLSL shaders
-
-  var vertexShader = createShader(gl, gl.VERTEX_SHADER, vTextShader);
-  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, frTextShader);
-
-  var program = createProgram(gl, vertexShader, fragmentShader);
-
-  gl.clearColor(1.0, 1.0, 1.0, 1.0);
-  gl.clear(gl.COLOR_BUFFER_BIT);
-
-  // gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+function render(gl, program, text_buffers) {
+  //  Use Shader
 
   gl.useProgram(program);
 
-  // Manually create a bufferInfo
-var textBufferInfo = {
-  attribs: {
-    a_position: { buffer: gl.createBuffer(), numComponents: 2, },
-    a_texcoord: { buffer: gl.createBuffer(), numComponents: 2, },
-  },
-  numElements: 0,
-};
+  //  Get Pos and Text Locations from shader
+  var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+  var texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
 
+  //  Fill data to memory
+  
+  const vertices = makeVerticesForString(text_buffers.fontInfo, text_buffers.Text);
 
-  //  Position
-  // var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+  gl.bindBuffer(gl.ARRAY_BUFFER, text_buffers.attribs.a_position.buffer);
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, vertices.arrays.position);
+  var size = 2;          
+  var type = gl.FLOAT;   
+  var normalize = false; 
+  var stride = 0;        
+  var offset = 0;        
+  gl.enableVertexAttribArray(positionAttributeLocation);
+  gl.vertexAttribPointer(
+    positionAttributeLocation, size, type, normalize, stride, offset);
 
-  // var positionBuffer = gl.createBuffer();
-  // gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  // setRectangle(gl, 140, 200, image.width * 3, image.height * 3);
+  gl.bindBuffer(gl.ARRAY_BUFFER, text_buffers.attribs.a_texcoord.buffer);
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, vertices.arrays.texcoord);
+  gl.enableVertexAttribArray(texCoordLocation);
+  gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
 
-  // gl.enableVertexAttribArray(positionAttributeLocation);
-  // gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-  // // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
-  // var size = 2;          // 2 components per iteration
-  // var type = gl.FLOAT;   // the data is 32bit floats
-  // var normalize = false; // don't normalize the data
-  // var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-  // var offset = 0;        // start at the beginning of the buffer
-  // gl.vertexAttribPointer(
-  //   positionAttributeLocation, size, type, normalize, stride, offset);
-
-
+  //  Setup uniforms
+  //  Color
   var colorUniformLocation = gl.getUniformLocation(program, "color");
   gl.uniform3f(colorUniformLocation, 0.0, 0.0, 0.0);
-
-  // var texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
-
-  // var texCoordBuffer = gl.createBuffer();
-  // gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-  // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-  //   0.0,  0.0,
-  //   1.0,  0.0,
-  //   0.0,  1.0,
-  //   0.0,  1.0,
-  //   1.0,  0.0,
-  //   1.0,  1.0
-  // ]), gl.STATIC_DRAW);
-
-  // gl.enableVertexAttribArray(texCoordLocation);
-  // gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
-
+  //  Resolution
   var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
   gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
 
-
+  //  Model matrix
+  //  Scale + Rotate + Translate
   const scaleMatrixLocation = gl.getUniformLocation(program, "u_matrix");
 
   const modelMatrix = mat4.create();
@@ -170,46 +135,49 @@ var textBufferInfo = {
   //   [0.5, 0.5, 0.0],
   // ); 
 
+  // mat4.rotate(modelMatrix, modelMatrix, 59, [0.2, 0.2, 0.0]);
+
+  // mat4.translate(modelMatrix, modelMatrix, [0.0, 0.0, 0.0]);
+  
+  // mat4.scale(modelMatrix, modelMatrix, [0.2, 0.2, 0.0]);
+
   gl.uniformMatrix4fv(scaleMatrixLocation, false, modelMatrix);
 
-  var texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  //  Activate texture
+  // gl.activeTexture(gl.TEXTURE_2D);
+  gl.bindTexture(gl.TEXTURE_2D, text_buffers.texture );
+
+  // var texture = gl.createTexture();
+  // gl.bindTexture(gl.TEXTURE_2D, texture);
 
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-  // Upload the image into the texture.
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 
-  // Set the parameters so we can render any size image.
-  // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-  var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
-  var texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
-  const test_str = "Hello world!";
-  var vertices = makeVerticesForString(fontInfo, test_str);
+ 
+  // const test_str = "Hello world!";
+  // var vertices = makeVerticesForString(fontInfo, test_str);
 
-  textBufferInfo.attribs.a_position.numComponents = 2;
+  // textBufferInfo.attribs.a_position.numComponents = 2;
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, textBufferInfo.attribs.a_position.buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, vertices.arrays.position, gl.DYNAMIC_DRAW);
-  var size = 2;          // 2 components per iteration
-  var type = gl.FLOAT;   // the data is 32bit floats
-  var normalize = false; // don't normalize the data
-  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-  var offset = 0;        // start at the beginning of the buffer
-  gl.enableVertexAttribArray(positionAttributeLocation);
-  gl.vertexAttribPointer(
-    positionAttributeLocation, size, type, normalize, stride, offset);
+  // gl.bindBuffer(gl.ARRAY_BUFFER, textBufferInfo.attribs.a_position.buffer);
+  // gl.bufferData(gl.ARRAY_BUFFER, vertices.arrays.position, gl.DYNAMIC_DRAW);
+  // var size = 2;          
+  // var type = gl.FLOAT;   
+  // var normalize = false; 
+  // var stride = 0;        
+  // var offset = 0;        
+  // gl.enableVertexAttribArray(positionAttributeLocation);
+  // gl.vertexAttribPointer(
+  //   positionAttributeLocation, size, type, normalize, stride, offset);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, textBufferInfo.attribs.a_texcoord.buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, vertices.arrays.texcoord, gl.DYNAMIC_DRAW);
-  gl.enableVertexAttribArray(texCoordLocation);
-  gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+  // gl.bindBuffer(gl.ARRAY_BUFFER, textBufferInfo.attribs.a_texcoord.buffer);
+  // gl.bufferData(gl.ARRAY_BUFFER, vertices.arrays.texcoord, gl.DYNAMIC_DRAW);
+  // gl.enableVertexAttribArray(texCoordLocation);
+  // gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
 
   // draw
   var primitiveType = gl.TRIANGLES;
@@ -221,11 +189,82 @@ var textBufferInfo = {
 
 
 function main() {
-  var image = new Image();
-  image.src = "Mozilla.png";
-  image.onload = function() {
-    render(image);
+  var canvas = document.querySelector('#c');
+  var gl = canvas.getContext('webgl');
+  if (!gl) {
+    return;
   }
+
+  var vertexShader = createShader(gl, gl.VERTEX_SHADER, vTextShader);
+  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, frTextShader);
+
+  const program = createProgram(gl, vertexShader, fragmentShader);
+
+  // Text init
+  const fontInfo = {
+    letterHeight: 8,
+    spaceWidth: 8,
+    spacing: -1,
+    textureWidth: 512,
+    textureHeight: 512,
+  
+    glyphInfos: MainFontData
+  
+  };
+
+  const textBufferInfo = {
+    attribs: {
+      a_position: { buffer: gl.createBuffer(), numComponents: 2, },
+      a_texcoord: { buffer: gl.createBuffer(), numComponents: 2, },
+    },
+    numElements: 0,
+    numVertices: 0,
+    fontInfo,
+    Text: "Hello world!"
+  };
+
+  // const test_str = "Hello world!";
+  const vertices = makeVerticesForString(fontInfo, textBufferInfo.Text);
+  
+  textBufferInfo.attribs.a_position.numComponents = 2;
+  //  Position buffer
+  gl.bindBuffer(gl.ARRAY_BUFFER, textBufferInfo.attribs.a_position.buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, vertices.arrays.position, gl.DYNAMIC_DRAW);
+  //  Texture Coord buffer
+  gl.bindBuffer(gl.ARRAY_BUFFER, textBufferInfo.attribs.a_texcoord.buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, vertices.arrays.texcoord, gl.DYNAMIC_DRAW);
+
+  textBufferInfo.numVertices = vertices.numVertices;
+
+  //  Create Texture
+  textBufferInfo.texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, textBufferInfo.texture );
+
+  // Temp texture
+  // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
+
+
+  const image = new Image();
+  image.src = "Mozilla.png";
+  image.addEventListener('load' , function (){
+    gl.bindTexture(gl.TEXTURE_2D, textBufferInfo.texture );
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      image,
+    );
+
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+  
+  
+    render(gl, program, textBufferInfo);
+  });
+
+  
 }
  
 
@@ -247,58 +286,7 @@ function setRectangle(gl, x, y, width, height) {
   ]), gl.STATIC_DRAW);
 }
 
-var fontInfo = {
-  letterHeight: 8,
-  spaceWidth: 8,
-  spacing: -1,
-  textureWidth: 512,
-  textureHeight: 512,
 
-  glyphInfos: MainFontData
-
-  // glyphInfos: {
-  //   'a': { x: 0, y: 0, width: 8, },
-  //   'b': { x: 8, y: 0, width: 8, },
-  //   'c': { x: 16, y: 0, width: 8, },
-  //   'd': { x: 24, y: 0, width: 8, },
-  //   'e': { x: 32, y: 0, width: 8, },
-  //   'f': { x: 40, y: 0, width: 8, },
-  //   'g': { x: 48, y: 0, width: 8, },
-  //   'h': { x: 56, y: 0, width: 8, },
-  //   'i': { x: 0, y: 8, width: 8, },
-  //   'j': { x: 8, y: 8, width: 8, },
-  //   'k': { x: 16, y: 8, width: 8, },
-  //   'l': { x: 24, y: 8, width: 8, },
-  //   'm': { x: 32, y: 8, width: 8, },
-  //   'n': { x: 40, y: 8, width: 8, },
-  //   'o': { x: 48, y: 8, width: 8, },
-  //   'p': { x: 56, y: 8, width: 8, },
-  //   'q': { x: 0, y: 16, width: 8, },
-  //   'r': { x: 8, y: 16, width: 8, },
-  //   's': { x: 16, y: 16, width: 8, },
-  //   't': { x: 24, y: 16, width: 8, },
-  //   'u': { x: 32, y: 16, width: 8, },
-  //   'v': { x: 40, y: 16, width: 8, },
-  //   'w': { x: 48, y: 16, width: 8, },
-  //   'x': { x: 56, y: 16, width: 8, },
-  //   'y': { x: 0, y: 24, width: 8, },
-  //   'z': { x: 8, y: 24, width: 8, },
-  //   '0': { x: 16, y: 24, width: 8, },
-  //   '1': { x: 24, y: 24, width: 8, },
-  //   '2': { x: 32, y: 24, width: 8, },
-  //   '3': { x: 40, y: 24, width: 8, },
-  //   '4': { x: 48, y: 24, width: 8, },
-  //   '5': { x: 56, y: 24, width: 8, },
-  //   '6': { x: 0, y: 32, width: 8, },
-  //   '7': { x: 8, y: 32, width: 8, },
-  //   '8': { x: 16, y: 32, width: 8, },
-  //   '9': { x: 24, y: 32, width: 8, },
-  //   '-': { x: 32, y: 32, width: 8, },
-  //   '*': { x: 40, y: 32, width: 8, },
-  //   '!': { x: 48, y: 32, width: 8, },
-  //   '?': { x: 56, y: 32, width: 8, },
-  // },
-};
 
 
 
@@ -352,17 +340,14 @@ function makeVerticesForString(fontInfo, s) {
       texcoords[offset + 10] = u2;
       texcoords[offset + 11] = v2;
  
-      // x += glyphInfo.width + glyphInfo.xadvance;
       x += glyphInfo.xadvance;
       offset += 12;
     } else {
-      // we don't have this character so just advance
       x += fontInfo.spaceWidth;
     }
   }
  
-  // return ArrayBufferViews for the portion of the TypedArrays
-  // that were actually used.
+
   return {
     arrays: {
       position: new Float32Array(positions.buffer, 0, offset),
