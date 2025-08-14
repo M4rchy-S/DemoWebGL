@@ -56,6 +56,35 @@ var frTextShader = `
   }
 
 `
+var vrChartShader = `
+  attribute vec2 a_position;
+  uniform vec2 u_resolution;
+
+
+  void main() {
+    // convert the position from pixels to 0.0 to 1.0
+    vec2 zeroToOne = a_position / u_resolution;
+ 
+    // convert from 0->1 to 0->2
+    vec2 zeroToTwo = zeroToOne * 2.0;
+ 
+    // convert from 0->2 to -1->+1 (clip space)
+    vec2 clipSpace = zeroToTwo - 1.0;
+
+    gl_Position = vec4(clipSpace, 0.0, 1.0);
+
+    gl_PointSize = 10.0;
+
+  }
+`
+
+var frChartShader = `
+
+  void main() {
+    gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+
+  }
+`
 
 function renderText(gl, program, text_buffers) {
   //  Use Shader
@@ -139,6 +168,34 @@ function renderText(gl, program, text_buffers) {
 }
 
 
+function renderChart(gl, program, ChartPoints) {
+  //  Use Shader
+
+  gl.useProgram(program);
+
+  //  Get Pos and Text Locations from shader
+  var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+
+  //  Fill data to memory
+  var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
+  gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, ChartPoints);
+  // gl.bufferSubData(gl.ARRAY_BUFFER, 0, vertices.arrays.texcoord);
+  gl.enableVertexAttribArray(positionAttributeLocation);
+  gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+  //  // Enable the depth test
+  //  gl.enable(gl.DEPTH_TEST);
+
+  // draw
+  gl.drawArrays(gl.POINTS, 0, 4);
+
+}
+
+
+
 
 
 function main() {
@@ -147,15 +204,15 @@ function main() {
   if (!gl) {
     return;
   }
-
+  //  Text Shader
   var vertexShader = createShader(gl, gl.VERTEX_SHADER, vTextShader);
   var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, frTextShader);
-  
-  // var vertexShaderChart = createShader(gl, gl.VERTEX_SHADER, vertChart);
-  // var fragmentShaderChart = createShader(gl, gl.FRAGMENT_SHADER, fragChart);
+  //  Chart Shader
+  var vertexShaderChart = createShader(gl, gl.VERTEX_SHADER, vrChartShader);
+  var fragmentShaderChart = createShader(gl, gl.FRAGMENT_SHADER, frChartShader);
 
   const TextShaderProgram = createProgram(gl, vertexShader, fragmentShader);
-  // const ChartShaderProgram = createProgram(gl, vertexShader, fragmentShader);
+  const ChartShaderProgram = createProgram(gl, vertexShaderChart, fragmentShaderChart);
 
   // Text init
   const fontInfo = {
@@ -234,14 +291,14 @@ function main() {
   });
 
   //  CHART BUFFER POINTS
-  // const ChartPointsBuffer = gl.createBuffer();
-  // gl.bindBuffer(gl.ARRAY_BUFFER, ChartPointsBuffer);
-  // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-  //   50, 50,
-  //   100, 100,
-  //   150, 150,
-  //   250, 250
-  // ]) , gl.DYNAMIC_DRAW);
+  const ChartPointsBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, ChartPointsBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    0.0, 0.0,
+    125, 125,
+    150, 150,
+    250, 250
+  ]) , gl.DYNAMIC_DRAW);
 
   function rendering_start() {
 
@@ -252,7 +309,7 @@ function main() {
 
     renderText(gl, textBufferInfo[0].ShaderProgram, textBufferInfo[0]);
 
-    // renderChart(gl, ChartShaderProgram, ChartPointsBuffer);
+    renderChart(gl, ChartShaderProgram, ChartPointsBuffer);
 
     requestAnimationFrame(rendering_start);
   }
