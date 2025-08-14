@@ -189,7 +189,7 @@ function main() {
   
   };
 
-  const textBufferInfo = {
+  const textBufferInfo = [{
     attribs: {
       a_position: { buffer: gl.createBuffer(), numComponents: 2, },
       a_texcoord: { buffer: gl.createBuffer(), numComponents: 2, },
@@ -208,51 +208,83 @@ function main() {
       y: 1.0
     },
     ShaderProgram: program
-  };
+  }, {
+    attribs: {
+      a_position: { buffer: gl.createBuffer(), numComponents: 2, },
+      a_texcoord: { buffer: gl.createBuffer(), numComponents: 2, },
+    },
+    numElements: 0,
+    numVertices: 0,
+    fontInfo,
+    Text: "Maybe test?",
+    rotation: 76.0,
+    position: {
+      x: 0.0,
+      y: 0.0
+    },
+    scale: {
+      x: 1.0,
+      y: 1.0
+    },
+    ShaderProgram: program
+  }
 
-  // const test_str = "Hello world!";
-  const vertices = makeVerticesForString(fontInfo, textBufferInfo.Text);
+  ];
+
+  for(let i = 0; i < textBufferInfo.length; i++)
+  {
+    // const test_str = "Hello world!";
+    const vertices = makeVerticesForString(fontInfo, textBufferInfo[i].Text);
+    
+    textBufferInfo[i].attribs.a_position.numComponents = 2;
+    //  Position buffer
+    gl.bindBuffer(gl.ARRAY_BUFFER, textBufferInfo[i].attribs.a_position.buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices.arrays.position, gl.DYNAMIC_DRAW);
+    //  Texture Coord buffer
+    gl.bindBuffer(gl.ARRAY_BUFFER, textBufferInfo[i].attribs.a_texcoord.buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices.arrays.texcoord, gl.DYNAMIC_DRAW);
   
-  textBufferInfo.attribs.a_position.numComponents = 2;
-  //  Position buffer
-  gl.bindBuffer(gl.ARRAY_BUFFER, textBufferInfo.attribs.a_position.buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, vertices.arrays.position, gl.DYNAMIC_DRAW);
-  //  Texture Coord buffer
-  gl.bindBuffer(gl.ARRAY_BUFFER, textBufferInfo.attribs.a_texcoord.buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, vertices.arrays.texcoord, gl.DYNAMIC_DRAW);
+    textBufferInfo[i].numVertices = vertices.numVertices;
+  
+    //  Create Texture
+    textBufferInfo[i].texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, textBufferInfo[i].texture );
+  
+    // Temp texture
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
 
-  textBufferInfo.numVertices = vertices.numVertices;
 
-  //  Create Texture
-  textBufferInfo.texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, textBufferInfo.texture );
-
-  // Temp texture
-  // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
-
+  }  
 
   const image = new Image();
   image.src = "Mozilla.png";
   image.addEventListener('load' , function (){
-    gl.bindTexture(gl.TEXTURE_2D, textBufferInfo.texture );
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      image,
-    );
 
-    gl.clearColor(1.0, 1.0, 1.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-  
-    requestAnimationFrame(rendering_start);
+    for(let i = 0; i < textBufferInfo.length; i++)
+    {
+      gl.bindTexture(gl.TEXTURE_2D, textBufferInfo[i].texture );
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        image,
+      );
+
+      requestAnimationFrame(rendering_start);
+
+    }
   });
 
   function rendering_start(){
-    // textBufferInfo.rotation += 0.01;
-    render(gl, textBufferInfo.ShaderProgram, textBufferInfo);
+
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    textBufferInfo[0].rotation += 0.01;
+    render(gl, textBufferInfo[0].ShaderProgram, textBufferInfo[0]);
+    render(gl, textBufferInfo[1].ShaderProgram, textBufferInfo[1]);
     requestAnimationFrame(rendering_start);
   }
   
@@ -260,24 +292,6 @@ function main() {
  
 
 main();
-
-
-function setRectangle(gl, x, y, width, height) {
-  var x1 = x;
-  var x2 = x + width;
-  var y1 = y;
-  var y2 = y + height;
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-    x1, y1,
-    x2, y1,
-    x1, y2,
-    x1, y2,
-    x2, y1,
-    x2, y2,
-  ]), gl.STATIC_DRAW);
-}
-
-
 
 
 
